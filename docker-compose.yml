@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+      - "4572:4572"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+    volumes:
+      - "${TMPDIR:-/tmp/localstack}:/tmp/localstack"
+    networks:
+      - localstack_network
+
+  terraform:
+    image: hashicorp/terraform:latest
+    container_name: terraform
+    depends_on:
+      - localstack
+    volumes:
+      - "./:/app"
+    working_dir: /app
+    environment:
+      AWS_ACCESS_KEY_ID: 1234
+      AWS_SECRET_ACCESS_KEY: xyz
+      AWS_DEFAULT_REGION: us-east-1
+      AWS_S3_ENDPOINT: "http://localstack:4572"
+      AWS_S3_FORCE_PATH_STYLE: "true"
+    networks:
+      - localstack_network
+
+networks:
+  localstack_network:
+    driver: bridge
